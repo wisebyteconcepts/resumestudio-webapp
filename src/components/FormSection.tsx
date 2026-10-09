@@ -70,24 +70,25 @@ export const FormSection: React.FC<FormSectionProps> = ({
     <div
       data-open={isOpen ? 'true' : 'false'}
       data-section-id={id}
-      className={`section-card rounded-2xl transition-all duration-150 ${
+      className={`section-card rounded-2xl border transition-[box-shadow,border-color] duration-150 ${
         isDragging
-          ? 'opacity-60 shadow-2xl scale-[1.01] bg-stone-50 z-30 ring-2'
+          ? 'opacity-60 shadow-2xl scale-[1.01] bg-stone-50 z-30 border-stone-300'
           : isHidden
-          ? 'border border-stone-200 opacity-60 bg-stone-50/60'
+          ? 'border-stone-200 opacity-60 bg-stone-50/60'
           : isOpen
-          ? 'border-2 shadow-sm bg-white'
-          : 'border border-stone-200/90 hover:border-stone-300 bg-white shadow-2xs'
+          ? 'bg-white'
+          : 'border-stone-200/90 hover:border-stone-300 bg-white shadow-2xs'
       } ${className}`}
       style={
         isOpen && !isHidden
           ? {
               borderColor: iconBgColor,
-              boxShadow: `0 0 0 1px ${hexToRgba(iconBgColor, 0.25)}, 0 2px 6px -1px rgba(0,0,0,0.06)`,
+              boxShadow: `0 0 0 2px ${iconBgColor}, 0 2px 6px -1px rgba(0,0,0,0.06)`,
             }
           : isDragging
           ? {
               borderColor: iconBgColor,
+              boxShadow: `0 0 0 2px ${iconBgColor}`,
             }
           : undefined
       }

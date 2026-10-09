@@ -74,14 +74,25 @@ export interface QualificationItem {
   result: string;
 }
 
+export interface CustomPersonalInfoField {
+  id: string;
+  label: string;
+  value: string;
+  isStandard?: boolean;
+  standardKey?: string;
+}
+
 export interface PersonalInfo {
-  fatherName: string;
-  motherName: string;
+  fatherName?: string;
+  motherName?: string;
   dob?: DateValue | string; // structured DateValue, supports legacy YYYY-MM-DD
-  religion: string;
-  category: string;
-  maritalStatus: string;
-  country: string;
+  religion?: string;
+  category?: string;
+  maritalStatus?: string;
+  country?: string;
+  customFields?: CustomPersonalInfoField[];
+  fieldOrder?: string[];
+  hiddenStandardKeys?: string[];
 }
 
 export interface PassportDetails {

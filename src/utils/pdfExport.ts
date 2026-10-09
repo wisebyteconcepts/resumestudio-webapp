@@ -284,6 +284,13 @@ const ISOLATED_RESUME_CSS = `
   .list-outside { list-style-position: outside !important; }
   .break-all { word-break: break-all !important; }
   .inline-block { display: inline-block !important; }
+  .truncate { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+
+  /* Keep resume section blocks together across page boundaries */
+  .resume-section-item {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
 `;
 
 export async function downloadPdfFile(fullName: string): Promise<PdfExportResult> {

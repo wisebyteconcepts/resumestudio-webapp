@@ -152,6 +152,7 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
 
   // Open/collapsed states of section cards (UI state only)
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    customisation: false, // Collapsible design panel, starts collapsed
     basic: true,
     objective: false,
     skills: true,
@@ -411,13 +412,15 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Form Cards */}
         <div
-          className={`lg:col-span-6 xl:col-span-6 space-y-4 ${
+          className={`lg:col-span-6 xl:col-span-6 space-y-4 p-1 sm:p-1.5 ${
             mobileTab === 'form' ? 'block' : 'hidden lg:block'
           }`}
         >
           {/* Customisation Card */}
           <CustomisationCard
             settings={settings}
+            isOpen={openSections.customisation}
+            onToggleOpen={() => toggleOpen('customisation')}
             onChange={(updated) =>
               onUpdateSettings((prev) => ({ ...prev, ...updated }))
             }

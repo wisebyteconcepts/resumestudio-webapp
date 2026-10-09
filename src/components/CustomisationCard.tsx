@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import {
   CheckIcon,
   PaintBrushIcon,
-  SparklesIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
 } from '@heroicons/react/24/outline';
 import {
   ACCENT_PRESETS,
@@ -19,16 +20,35 @@ import { loadFontPairOnDemand } from '../utils/fontLoader';
 interface CustomisationCardProps {
   settings: CustomisationSettings;
   onChange: (updated: Partial<CustomisationSettings>) => void;
+  isOpen?: boolean;
+  onToggleOpen?: () => void;
 }
 
 export const CustomisationCard: React.FC<CustomisationCardProps> = ({
   settings,
   onChange,
+  isOpen: controlledIsOpen,
+  onToggleOpen: controlledToggleOpen,
 }) => {
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isControlled = controlledIsOpen !== undefined;
+  const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
+
+  const handleToggle = () => {
+    if (isControlled && controlledToggleOpen) {
+      controlledToggleOpen();
+    } else {
+      setInternalIsOpen((prev) => !prev);
+    }
+  };
+
   const [customColor, setCustomColor] = useState(settings.accentColor);
 
   const selectedTemplate =
     TEMPLATE_INFO.find((t) => t.id === settings.templateId) || TEMPLATE_INFO[0];
+
+  const selectedFontPair =
+    FONT_PAIRS.find((f) => f.id === settings.fontPair) || FONT_PAIRS[0];
 
   const handleColorChange = (hex: string) => {
     setCustomColor(hex);
@@ -36,166 +56,221 @@ export const CustomisationCard: React.FC<CustomisationCardProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-stone-200/90 shadow-xs p-5 sm:p-6 mb-6">
-      <div className="flex items-center justify-between pb-4 border-b border-stone-100">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-[#8C3A27]/10 text-[#8C3A27] flex items-center justify-center">
-            <PaintBrushIcon className="w-4 h-4" />
+    <div
+      data-open={isOpen ? 'true' : 'false'}
+      className={`bg-white rounded-2xl border transition-[box-shadow,border-color] duration-150 mb-4 shadow-2xs ${
+        isOpen
+          ? 'border-[#8C3A27]'
+          : 'border-stone-200/90 hover:border-stone-300'
+      }`}
+      style={
+        isOpen
+          ? {
+              boxShadow: `0 0 0 2px ${settings.accentColor}, 0 2px 6px -1px rgba(0,0,0,0.06)`,
+            }
+          : undefined
+      }
+    >
+      {/* Clickable Header Button */}
+      <button
+        type="button"
+        onClick={handleToggle}
+        className="w-full p-4 sm:p-5 flex items-center justify-between gap-3 select-none text-left rounded-2xl transition-colors hover:bg-stone-50/50 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8C3A27]"
+        aria-expanded={isOpen}
+      >
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-white shrink-0 shadow-2xs"
+            style={{ backgroundColor: settings.accentColor }}
+          >
+            <PaintBrushIcon className="w-4 h-4 text-white" />
           </div>
-          <div>
-            <h2 className="font-serif-ui text-base font-bold text-stone-900 leading-tight">
-              Design & Typography
-            </h2>
-            <p className="text-xs text-stone-500">
-              Customise visual template, accent colour palette, and font pairing
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="font-serif-ui text-sm sm:text-base font-bold text-stone-900 leading-tight">
+                Design & Typography
+              </h2>
+              {/* Summary pills when collapsed */}
+              {!isOpen && (
+                <div className="flex items-center gap-1.5 text-[11px] text-stone-500 font-medium">
+                  <span className="px-1.5 py-0.5 rounded bg-stone-100 border border-stone-200/80">
+                    {selectedTemplate.name}
+                  </span>
+                  <span className="w-2.5 h-2.5 rounded-full border border-black/10 inline-block shrink-0" style={{ backgroundColor: settings.accentColor }} />
+                  <span className="hidden sm:inline-block px-1.5 py-0.5 rounded bg-stone-100 border border-stone-200/80">
+                    {selectedFontPair.label}
+                  </span>
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-stone-500 truncate mt-0.5">
+              Template, accent colour, font pairing, and section headings
             </p>
           </div>
         </div>
-      </div>
 
-      <div className="mt-5 space-y-6">
-        {/* 1. Template Switcher */}
-        <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">
-            Resume Template
-          </label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {TEMPLATE_INFO.map((tpl) => {
-              const isSelected = settings.templateId === tpl.id;
-              return (
-                <button
-                  key={tpl.id}
-                  type="button"
-                  onClick={() => onChange({ templateId: tpl.id })}
-                  className={`px-3 py-2.5 rounded-xl border text-left transition-all relative ${
-                    isSelected
-                      ? 'border-[#8C3A27] bg-[#8C3A27]/5 text-stone-900 shadow-xs ring-1 ring-[#8C3A27]'
-                      : 'border-stone-200 hover:border-stone-300 bg-white text-stone-700'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold font-serif-ui">
-                      {tpl.name}
-                    </span>
-                    {isSelected && (
-                      <span className="w-4 h-4 rounded-full bg-[#8C3A27] text-white flex items-center justify-center text-[10px]">
-                        <CheckIcon className="w-2.5 h-2.5 stroke-[3]" />
+        <div className="flex items-center gap-1.5 shrink-0 text-stone-400">
+          <span className="text-xs font-medium text-stone-500 hidden sm:inline">
+            {isOpen ? 'Collapse' : 'Customise'}
+          </span>
+          {isOpen ? (
+            <ChevronUpIcon className="w-4 h-4 text-stone-600" />
+          ) : (
+            <ChevronDownIcon className="w-4 h-4 text-stone-400 group-hover:text-stone-600" />
+          )}
+        </div>
+      </button>
+
+      {/* Collapsible Panel Body */}
+      {isOpen && (
+        <div className="p-5 sm:p-6 pt-0 border-t border-stone-100 mt-1 space-y-6">
+          {/* 1. Template Switcher */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">
+              Resume Template
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {TEMPLATE_INFO.map((tpl) => {
+                const isSelected = settings.templateId === tpl.id;
+                return (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    onClick={() => onChange({ templateId: tpl.id as TemplateId })}
+                    className={`px-3 py-2.5 rounded-xl border text-left transition-all relative cursor-pointer ${
+                      isSelected
+                        ? 'border-[#8C3A27] bg-[#8C3A27]/5 text-stone-900 shadow-2xs ring-1 ring-[#8C3A27]'
+                        : 'border-stone-200 hover:border-stone-300 bg-white text-stone-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold font-serif-ui">
+                        {tpl.name}
                       </span>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
+                      {isSelected && (
+                        <CheckIcon className="w-3.5 h-3.5 text-[#8C3A27]" />
+                      )}
+                    </div>
+                    <p className="text-[10px] text-stone-500 mt-0.5 line-clamp-1">
+                      {tpl.desc}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          {/* One-line description of the selected template */}
-          <div className="mt-2.5 px-3 py-2 rounded-lg bg-stone-50 border border-stone-200/60 text-xs text-stone-600 flex items-center gap-2">
-            <span className="font-medium text-stone-900">
-              {selectedTemplate.name}:
-            </span>
-            <span>{selectedTemplate.desc}</span>
-          </div>
-        </div>
 
-        {/* 2. Accent Colour */}
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500">
-              Accent Colour
+          {/* 2. Accent Colour Palette */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500">
+                Accent Colour
+              </label>
+              <span className="text-[11px] font-mono font-medium text-stone-500 uppercase">
+                {settings.accentColor}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {ACCENT_PRESETS.map((preset) => {
+                const isSelected =
+                  settings.accentColor.toLowerCase() ===
+                  preset.hex.toLowerCase();
+                return (
+                  <button
+                    key={preset.hex}
+                    type="button"
+                    onClick={() => handleColorChange(preset.hex)}
+                    title={`${preset.name} (${preset.hex})`}
+                    className={`group relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
+                      isSelected
+                        ? 'border-stone-900 bg-stone-900 text-white shadow-xs'
+                        : 'border-stone-200 hover:border-stone-300 bg-stone-50 text-stone-700'
+                    }`}
+                  >
+                    <span
+                      className="w-3 h-3 rounded-full border border-black/10 shrink-0"
+                      style={{ backgroundColor: preset.hex }}
+                    />
+                    <span className="text-[11px]">{preset.name}</span>
+                  </button>
+                );
+              })}
+
+              {/* Custom HEX Picker */}
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl border border-dashed border-stone-300 bg-stone-50">
+                <input
+                  type="color"
+                  value={customColor}
+                  onChange={(e) => handleColorChange(e.target.value)}
+                  className="w-5 h-5 rounded cursor-pointer border-0 p-0 bg-transparent"
+                  title="Pick a custom colour"
+                />
+                <input
+                  type="text"
+                  value={customColor}
+                  onChange={(e) => handleColorChange(e.target.value)}
+                  placeholder="#8C3A27"
+                  className="w-16 font-mono text-[11px] text-stone-700 bg-transparent border-0 focus:outline-none uppercase"
+                  maxLength={7}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Typography Font Pairing */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">
+              Typography Pairing
             </label>
-            <span className="text-xs font-mono text-stone-500">
-              Current: <strong className="text-stone-800">{settings.accentColor}</strong>
-            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {FONT_PAIRS.map((pair) => {
+                const isSelected = settings.fontPair === pair.id;
+                return (
+                  <button
+                    key={pair.id}
+                    type="button"
+                    onClick={() => {
+                      loadFontPairOnDemand(pair.id as FontPair);
+                      onChange({ fontPair: pair.id as FontPair });
+                    }}
+                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                      isSelected
+                        ? 'border-[#8C3A27] bg-[#8C3A27]/5 text-stone-900 shadow-2xs ring-1 ring-[#8C3A27]'
+                        : 'border-stone-200 hover:border-stone-300 bg-white text-stone-700'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-bold">{pair.label}</span>
+                      {isSelected && (
+                        <CheckIcon className="w-3.5 h-3.5 text-[#8C3A27]" />
+                      )}
+                    </div>
+                    <p className="text-[11px] text-stone-500 leading-snug">
+                      {pair.description}
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
-            {ACCENT_PRESETS.map((preset) => {
-              const isSelected =
-                settings.accentColor.toLowerCase() === preset.hex.toLowerCase();
-              return (
-                <button
-                  key={preset.hex}
-                  type="button"
-                  onClick={() => handleColorChange(preset.hex)}
-                  title={preset.name}
-                  className={`w-8 h-8 rounded-full transition-transform flex items-center justify-center shadow-xs relative ${
-                    isSelected ? 'ring-2 ring-offset-2 ring-stone-900 scale-110' : 'hover:scale-105'
-                  }`}
-                  style={{ backgroundColor: preset.hex }}
-                >
-                  {isSelected && <CheckIcon className="w-4 h-4 text-white stroke-[3]" />}
-                </button>
-              );
-            })}
-
-            {/* Custom color picker swatch */}
-            <label
-              className="relative w-8 h-8 rounded-full border border-stone-300 shadow-xs cursor-pointer flex items-center justify-center overflow-hidden hover:scale-105 transition-transform"
-              title="Pick custom colour"
-              style={{ backgroundColor: customColor }}
-            >
+          {/* 4. Icon Toggle */}
+          <div className="pt-2 border-t border-stone-100 flex items-center justify-between">
+            <label className="flex items-center gap-3 cursor-pointer">
               <input
-                type="color"
-                value={customColor}
-                onChange={(e) => handleColorChange(e.target.value)}
-                className="opacity-0 absolute inset-0 w-full h-full cursor-pointer"
+                type="checkbox"
+                checked={settings.showHeadingIcons}
+                onChange={(e) => onChange({ showHeadingIcons: e.target.checked })}
+                className="w-4 h-4 rounded text-[#8C3A27] focus:ring-[#8C3A27] border-stone-300 cursor-pointer"
               />
-              <span className="sr-only">Custom colour</span>
+              <span className="text-xs font-medium text-stone-800">
+                Show icons before section headings
+              </span>
             </label>
           </div>
         </div>
-
-        {/* 3. Font Pairing */}
-        <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">
-            Font Pairing
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            {FONT_PAIRS.map((pair) => {
-              const isSelected = settings.fontPair === pair.id;
-              return (
-                <button
-                  key={pair.id}
-                  type="button"
-                  onClick={() => {
-                    loadFontPairOnDemand(pair.id as FontPair);
-                    onChange({ fontPair: pair.id as FontPair });
-                  }}
-                  className={`p-3 rounded-xl border text-left transition-all ${
-                    isSelected
-                      ? 'border-[#8C3A27] bg-[#8C3A27]/5 text-stone-900 ring-1 ring-[#8C3A27]'
-                      : 'border-stone-200 hover:border-stone-300 bg-white text-stone-700'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-bold">{pair.label}</span>
-                    {isSelected && (
-                      <CheckIcon className="w-3.5 h-3.5 text-[#8C3A27]" />
-                    )}
-                  </div>
-                  <p className="text-[11px] text-stone-500 leading-snug">
-                    {pair.description}
-                  </p>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* 4. Icon Toggle */}
-        <div className="pt-2 border-t border-stone-100 flex items-center justify-between">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={settings.showHeadingIcons}
-              onChange={(e) => onChange({ showHeadingIcons: e.target.checked })}
-              className="w-4 h-4 rounded text-[#8C3A27] focus:ring-[#8C3A27] border-stone-300 cursor-pointer"
-            />
-            <span className="text-xs font-medium text-stone-800">
-              Show icons before section headings
-            </span>
-          </label>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

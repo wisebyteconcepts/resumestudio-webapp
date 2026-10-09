@@ -363,17 +363,51 @@ export const ResumeSectionItem: React.FC<ResumeSectionsRendererProps> = ({
     case 'personal': {
       const { personal } = data;
       const dobFormatted = formatDOB(personal.dob);
-      const fields = [
-        personal.fatherName && { label: "Father's Name", val: personal.fatherName },
-        personal.motherName && { label: "Mother's Name", val: personal.motherName },
-        dobFormatted && { label: 'Date of Birth', val: dobFormatted },
-        personal.maritalStatus && { label: 'Marital Status', val: personal.maritalStatus },
-        personal.country && { label: 'Nationality', val: personal.country },
-        personal.religion && { label: 'Religion', val: personal.religion },
-        personal.category && { label: 'Category', val: personal.category },
-      ].filter(Boolean) as { label: string; val: string }[];
+      const hiddenKeys = personal.hiddenStandardKeys || [];
+      const customFields = personal.customFields || [];
 
-      if (fields.length === 0) return null;
+      // Map standard keys to resolved label & value
+      const standardMap: Record<string, { label: string; val: string } | null> = {
+        fatherName: personal.fatherName?.trim() ? { label: "Father's Name", val: personal.fatherName.trim() } : null,
+        motherName: personal.motherName?.trim() ? { label: "Mother's Name", val: personal.motherName.trim() } : null,
+        dob: dobFormatted ? { label: 'Date of Birth', val: dobFormatted } : null,
+        maritalStatus: personal.maritalStatus?.trim() ? { label: 'Marital Status', val: personal.maritalStatus.trim() } : null,
+        country: personal.country?.trim() ? { label: 'Nationality', val: personal.country.trim() } : null,
+        religion: personal.religion?.trim() ? { label: 'Religion', val: personal.religion.trim() } : null,
+        category: personal.category?.trim() ? { label: 'Category', val: personal.category.trim() } : null,
+      };
+
+      // Determine ordering
+      const defaultStandardKeys = ['fatherName', 'motherName', 'dob', 'maritalStatus', 'country', 'religion', 'category'];
+      const fieldOrder = personal.fieldOrder && personal.fieldOrder.length > 0
+        ? personal.fieldOrder
+        : [...defaultStandardKeys, ...customFields.map((cf) => cf.id)];
+
+      const resolvedFields: Array<{ id: string; label: string; val: string }> = [];
+
+      for (const id of fieldOrder) {
+        if (hiddenKeys.includes(id)) continue;
+        if (standardMap[id] !== undefined) {
+          const std = standardMap[id];
+          if (std && std.label && std.val) {
+            resolvedFields.push({ id, label: std.label, val: std.val });
+          }
+        } else {
+          const cf = customFields.find((c) => c.id === id);
+          if (cf && cf.label?.trim() && cf.value?.trim()) {
+            resolvedFields.push({ id: cf.id, label: cf.label.trim(), val: cf.value.trim() });
+          }
+        }
+      }
+
+      // Also pick up any custom fields not in fieldOrder
+      for (const cf of customFields) {
+        if (!fieldOrder.includes(cf.id) && cf.label?.trim() && cf.value?.trim()) {
+          resolvedFields.push({ id: cf.id, label: cf.label.trim(), val: cf.value.trim() });
+        }
+      }
+
+      if (resolvedFields.length === 0) return null;
 
       return (
         <section className="resume-section-item mb-4">
@@ -387,9 +421,9 @@ export const ResumeSectionItem: React.FC<ResumeSectionsRendererProps> = ({
             customIconName={customIconName}
           />
           <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-stone-700">
-            {fields.map((f, idx) => (
+            {resolvedFields.map((f) => (
               <div
-                key={idx}
+                key={f.id}
                 className={`flex items-baseline gap-1.5 ${
                   isCompact ? 'text-[9px]' : 'text-[9.5px]'
                 } ${bodyFontClass}`}
