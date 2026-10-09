@@ -1,0 +1,6 @@
+{
+  "name": "Resume Studio",
+  "description": "A web-based A4 resume maker with auto-fit, real selectable-text PDF export, 6 editorial templates, and complete client-side privacy.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,117 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+.font-serif-ui {
+  font-family: 'Lora', Georgia, serif;
+}
+
+.font-sans-ui {
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.font-pair-poppins {
+  font-family: 'Poppins', sans-serif;
+}
+
+.font-pair-inter {
+  font-family: 'Inter', sans-serif;
+}
+
+.font-pair-playfair {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.font-pair-sourcesans {
+  font-family: 'Source Sans 3', sans-serif;
+}
+
+.font-pair-merriweather {
+  font-family: 'Merriweather', Georgia, serif;
+}
+
+.font-pair-lato {
+  font-family: 'Lato', sans-serif;
+}
+
+/* A4 dimensions: 210mm x 297mm (standard ratio ~1:1.4142) */
+.a4-sheet {
+  width: 210mm;
+  min-height: 297mm;
+  box-sizing: border-box;
+}
+
+/* Print Rules for True Selectable Vector A4 PDF */
+@page {
+  size: 210mm 297mm;
+  margin: 0;
+}
+
+@media print {
+  html, body {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 210mm !important;
+    height: auto !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    display: block !important;
+    width: 210mm !important;
+    min-height: 296.5mm !important;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    overflow: hidden !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .page {
+    width: 210mm !important;
+    height: 296.5mm !important;
+    overflow: hidden !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  /* Prevent awkward page break splits */
+  .resume-section-item {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
+
+@media screen {
+  .print-only {
+    position: fixed !important;
+    left: -99999px !important;
+    top: 0 !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    background: #ffffff !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: none !important;
+    z-index: -9999 !important;
+  }
+}
