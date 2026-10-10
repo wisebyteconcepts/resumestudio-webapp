@@ -1,6 +1,11 @@
 @import "tailwindcss";
 
 @layer base {
+  :root {
+    --ring-width: 2px;
+    --accent: #8C3A27;
+  }
+
   body {
     font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }

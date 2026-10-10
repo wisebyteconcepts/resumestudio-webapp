@@ -208,6 +208,9 @@ export const DEFAULT_EMPTY_RESUME: ResumeData = {
     date: new Date().toISOString().split('T')[0],
     place: '',
     signatureUrl: null,
+    hideDate: false,
+    hidePlace: false,
+    hideSignature: false,
   },
 };
 
@@ -360,5 +363,8 @@ export const SAMPLE_PRIYA_SHARMA: ResumeData = {
     date: new Date().toISOString().split('T')[0],
     place: 'Bengaluru',
     signatureUrl: SAMPLE_SIGNATURE_SVG,
+    hideDate: false,
+    hidePlace: false,
+    hideSignature: false,
   },
 };

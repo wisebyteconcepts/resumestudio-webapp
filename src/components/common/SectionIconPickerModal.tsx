@@ -154,6 +154,15 @@ export const SectionIconPickerModal: React.FC<SectionIconPickerModalProps> = ({
                         ? 'border-[#8C3A27] bg-[#8C3A27]/10 text-[#8C3A27] shadow-xs'
                         : 'border-stone-200 bg-white text-stone-700 hover:border-stone-400'
                     }`}
+                    style={
+                      isSelected
+                        ? {
+                            borderColor: accentColor,
+                            boxShadow: `0 0 0 1px ${accentColor}`,
+                            color: accentColor,
+                          }
+                        : undefined
+                    }
                   >
                     <IconComp className="w-4 h-4" />
                   </button>
@@ -191,13 +200,14 @@ export const SectionIconPickerModal: React.FC<SectionIconPickerModalProps> = ({
                 onClick={() => handlePick(item.id)}
                 className={`p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all group ${
                   isSelected
-                    ? 'border-2 shadow-sm font-semibold'
+                    ? 'shadow-sm font-semibold'
                     : 'border-stone-200/80 bg-white hover:border-stone-400 hover:shadow-2xs'
                 }`}
                 style={
                   isSelected
                     ? {
                         borderColor: accentColor,
+                        boxShadow: `0 0 0 1px ${accentColor}`,
                         backgroundColor: `${accentColor}12`,
                         color: accentColor,
                       }

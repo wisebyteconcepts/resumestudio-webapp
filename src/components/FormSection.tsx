@@ -83,19 +83,19 @@ export const FormSection: React.FC<FormSectionProps> = ({
         isOpen && !isHidden
           ? {
               borderColor: iconBgColor,
-              boxShadow: `0 0 0 2px ${iconBgColor}, 0 2px 6px -1px rgba(0,0,0,0.06)`,
+              boxShadow: `0 0 0 1px ${iconBgColor}, 0 2px 6px -1px rgba(0,0,0,0.06)`,
             }
           : isDragging
           ? {
               borderColor: iconBgColor,
-              boxShadow: `0 0 0 2px ${iconBgColor}`,
+              boxShadow: `0 0 0 1px ${iconBgColor}`,
             }
           : undefined
       }
     >
       {/* Header Bar */}
       <div
-        className="p-4 sm:p-5 flex items-center justify-between gap-3 select-none cursor-pointer group rounded-t-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8C3A27]"
+        className="p-4 sm:p-5 flex items-center justify-between gap-3 select-none cursor-pointer group rounded-t-2xl focus:outline-none focus-visible:outline-2 focus-visible:outline-[#8C3A27] focus-visible:outline-offset-2"
         onClick={onToggleOpen}
         tabIndex={0}
         role="button"

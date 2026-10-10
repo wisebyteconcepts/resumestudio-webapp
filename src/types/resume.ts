@@ -109,6 +109,9 @@ export interface DeclarationDetails {
   date?: DateValue | string;
   place: string;
   signatureUrl: string | null;
+  hideDate?: boolean;
+  hidePlace?: boolean;
+  hideSignature?: boolean;
 }
 
 export interface BasicDetails {

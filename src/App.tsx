@@ -4,10 +4,12 @@
  */
 
 import React, { Suspense, useEffect, useRef, useState } from 'react';
-import { ClearConfirmModal } from './components/ClearConfirmModal';
+import {
+  DataActionType,
+  DataConfirmModal,
+} from './components/DataConfirmModal';
 import { LandingHero } from './components/LandingHero';
 import { PrintableResume } from './components/PrintableResume';
-import { StartBlankConfirmModal } from './components/StartBlankConfirmModal';
 import { TopBar } from './components/TopBar';
 import {
   DEFAULT_EMPTY_RESUME,
@@ -78,10 +80,11 @@ export default function App() {
   const [step, setStep] = useState<'landing' | 'editor'>('landing');
   const [isSaved, setIsSaved] = useState(true);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-  const [clearModalOpen, setClearModalOpen] = useState(false);
-  const [startBlankModalOpen, setStartBlankModalOpen] = useState(false);
+  const [dataConfirmAction, setDataConfirmAction] =
+    useState<DataActionType | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [toastUndo, setToastUndo] = useState<(() => void) | null>(null);
+  const [editorSessionKey, setEditorSessionKey] = useState<number>(0);
 
   // Auto-save debounce timer (500 ms)
   const saveTimeoutRef = useRef<number | null>(null);
@@ -97,7 +100,7 @@ export default function App() {
     toastTimeoutRef.current = window.setTimeout(() => {
       setToastMessage(null);
       setToastUndo(null);
-    }, 4500);
+    }, 6000);
   };
 
   // Debounced auto-save effect (500 ms)
@@ -133,7 +136,10 @@ export default function App() {
   );
 
   // Start Blank execution
-  const executeStartBlank = () => {
+  const executeStartBlank = (tplId?: TemplateId) => {
+    if (tplId) {
+      setSettings((prev) => ({ ...prev, templateId: tplId }));
+    }
     setData({
       ...DEFAULT_EMPTY_RESUME,
       declaration: {
@@ -141,45 +147,41 @@ export default function App() {
         date: new Date().toISOString().split('T')[0],
       },
     });
+    setEditorSessionKey((k) => k + 1);
     setStep('editor');
     showToast('Started with a blank resume.');
   };
 
-  const handleStartBlankRequest = () => {
-    if (hasSavedData) {
-      setStartBlankModalOpen(true);
-    } else {
-      executeStartBlank();
-    }
-  };
-
   // Start with sample data (optionally specifying template)
   const handleStartWithSample = (tplId?: TemplateId) => {
-    setData(SAMPLE_PRIYA_SHARMA);
     if (tplId) {
       setSettings((prev) => ({
         ...prev,
         templateId: tplId,
       }));
     }
+    setData(SAMPLE_PRIYA_SHARMA);
+    setEditorSessionKey((k) => k + 1);
     setStep('editor');
     showToast('Loaded Priya Sharma sample resume.');
   };
 
-  // Open editor with chosen template on double-click
-  const handleOpenTemplate = (tplId: TemplateId) => {
-    setSettings((prev) => ({ ...prev, templateId: tplId }));
-    if (!hasSavedData) {
-      setData(SAMPLE_PRIYA_SHARMA);
+  // Continue editing with optional template switch
+  const handleContinueEditing = (tplId?: TemplateId) => {
+    if (tplId) {
+      setSettings((prev) => ({ ...prev, templateId: tplId }));
     }
     setStep('editor');
   };
 
-  // Clear all data
-  const handleConfirmClear = () => {
-    setData(DEFAULT_EMPTY_RESUME);
-    clearLocalStorage();
-    showToast('All resume fields have been reset.');
+  // Open editor with chosen template
+  const handleOpenTemplate = (tplId: TemplateId) => {
+    setSettings((prev) => ({ ...prev, templateId: tplId }));
+    if (!hasSavedData) {
+      setData(DEFAULT_EMPTY_RESUME);
+    }
+    setEditorSessionKey((k) => k + 1);
+    setStep('editor');
   };
 
   // Download backup JSON
@@ -188,7 +190,7 @@ export default function App() {
     showToast('Backup JSON downloaded successfully.');
   };
 
-  // Restore backup from file
+  // Restore backup from file with Undo
   const handleRestoreBackup = (file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -197,17 +199,101 @@ export default function App() {
 
       const result = validateAndParseBackup(content);
       if (result.success && result.data) {
+        const prevDataSnapshot = JSON.parse(JSON.stringify(data));
+        const prevSettingsSnapshot = JSON.parse(JSON.stringify(settings));
+
         setData(result.data);
         if (result.settings) {
           setSettings(result.settings);
         }
+        setEditorSessionKey((k) => k + 1);
         setStep('editor');
-        showToast('Resume data restored from backup file.');
+        showToast('Resume data restored from backup file.', () => {
+          setData(prevDataSnapshot);
+          setSettings(prevSettingsSnapshot);
+          setEditorSessionKey((k) => k + 1);
+          showToast('Restored previous resume state.');
+        });
       } else {
         showToast(result.error || 'Failed to parse backup JSON.');
       }
     };
     reader.readAsText(file);
+  };
+
+  // Execute confirmed data action with Undo support
+  const handleConfirmDataAction = () => {
+    if (!dataConfirmAction) return;
+
+    const action = dataConfirmAction;
+    setDataConfirmAction(null);
+
+    const prevDataSnapshot = JSON.parse(JSON.stringify(data));
+    const prevSettingsSnapshot = JSON.parse(JSON.stringify(settings));
+
+    setEditorSessionKey((k) => k + 1);
+
+    switch (action) {
+      case 'load-sample': {
+        setData(SAMPLE_PRIYA_SHARMA);
+        showToast('Loaded Priya Sharma sample resume.', () => {
+          setData(prevDataSnapshot);
+          setSettings(prevSettingsSnapshot);
+          showToast('Restored previous resume state.');
+        });
+        break;
+      }
+      case 'start-blank': {
+        setData({
+          ...DEFAULT_EMPTY_RESUME,
+          declaration: {
+            ...DEFAULT_EMPTY_RESUME.declaration,
+            date: new Date().toISOString().split('T')[0],
+          },
+        });
+        showToast('Started with a blank resume.', () => {
+          setData(prevDataSnapshot);
+          setSettings(prevSettingsSnapshot);
+          showToast('Restored previous resume state.');
+        });
+        break;
+      }
+      case 'reload-saved': {
+        const savedData = loadSavedResume();
+        const savedSettings = loadSavedSettings();
+        setData(savedData);
+        setSettings(savedSettings);
+        showToast('Reloaded last saved draft from browser.', () => {
+          setData(prevDataSnapshot);
+          setSettings(prevSettingsSnapshot);
+          showToast('Restored previous resume state.');
+        });
+        break;
+      }
+      case 'reset-design': {
+        setSettings({
+          ...DEFAULT_SETTINGS,
+          templateId: settings.templateId,
+        });
+        showToast('Reset design settings to defaults.', () => {
+          setData(prevDataSnapshot);
+          setSettings(prevSettingsSnapshot);
+          showToast('Restored previous resume state.');
+        });
+        break;
+      }
+      case 'clear-everything': {
+        setData(DEFAULT_EMPTY_RESUME);
+        setSettings(DEFAULT_SETTINGS);
+        clearLocalStorage();
+        showToast('All resume data and settings cleared.', () => {
+          setData(prevDataSnapshot);
+          setSettings(prevSettingsSnapshot);
+          showToast('Restored previous resume state.');
+        });
+        break;
+      }
+    }
   };
 
   // Direct PDF Download (Strict 1-page A4 format)
@@ -249,23 +335,27 @@ export default function App() {
             settings={settings}
             hasSavedData={hasSavedData}
             onSelectTemplate={handleSelectTemplate}
-            onStartBlank={handleStartBlankRequest}
+            onStartBlank={executeStartBlank}
             onStartWithSample={handleStartWithSample}
-            onContinueEditing={() => setStep('editor')}
+            onContinueEditing={handleContinueEditing}
             onRestoreBackup={handleRestoreBackup}
             onOpenTemplate={handleOpenTemplate}
           />
         ) : (
           <>
-            {/* Editor Top Bar */}
+            {/* Editor Top Bar with unified Data dropdown */}
             <TopBar
               isSaved={isSaved}
               isGeneratingPdf={isGeneratingPdf}
-              onStartBlank={handleStartBlankRequest}
-              onLoadSample={handleStartWithSample}
+              onRequestStartBlank={() => setDataConfirmAction('start-blank')}
+              onRequestLoadSample={() => setDataConfirmAction('load-sample')}
+              onRequestReloadSaved={() => setDataConfirmAction('reload-saved')}
+              onRequestResetDesign={() => setDataConfirmAction('reset-design')}
+              onRequestClearEverything={() =>
+                setDataConfirmAction('clear-everything')
+              }
               onDownloadBackup={handleDownloadBackup}
               onRestoreBackup={handleRestoreBackup}
-              onOpenClearConfirm={() => setClearModalOpen(true)}
               onDownloadPdf={handleDownloadPdf}
               onPrintViaBrowser={handlePrintViaBrowser}
               onGoToLanding={() => setStep('landing')}
@@ -282,7 +372,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setStep('landing')}
-                    className="hover:text-stone-900 transition-colors font-medium flex items-center gap-1 cursor-pointer"
+                    className="hover:text-stone-900 transition-colors font-medium flex items-center gap-1 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8C3A27] rounded"
                   >
                     <span>← Atelier Overview</span>
                   </button>
@@ -296,7 +386,7 @@ export default function App() {
                   <button
                     type="button"
                     onClick={() => setStep('landing')}
-                    className="px-2.5 py-1 rounded-md bg-stone-200/80 hover:bg-stone-300/80 text-stone-800 transition-colors text-[11px] font-medium cursor-pointer"
+                    className="px-2.5 py-1 rounded-md bg-stone-200/80 hover:bg-stone-300/80 text-stone-800 transition-colors text-[11px] font-medium cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8C3A27]"
                   >
                     Change Template ({settings.templateId})
                   </button>
@@ -308,6 +398,7 @@ export default function App() {
             <main className="flex-1">
               <Suspense fallback={<EditorLoadingSkeleton />}>
                 <LazyResumeEditor
+                  key={editorSessionKey}
                   data={data}
                   settings={settings}
                   onUpdateData={setData}
@@ -320,27 +411,19 @@ export default function App() {
         )}
       </div>
 
-      {/* Start Blank Confirmation Modal (when existing data exists) */}
-      <StartBlankConfirmModal
-        isOpen={startBlankModalOpen}
-        onClose={() => setStartBlankModalOpen(false)}
-        onConfirmStartBlank={() => {
-          setStartBlankModalOpen(false);
-          executeStartBlank();
-        }}
+      {/* Unified Data Confirmation Modal with backup-first and undo */}
+      <DataConfirmModal
+        isOpen={dataConfirmAction !== null}
+        actionType={dataConfirmAction}
+        onClose={() => setDataConfirmAction(null)}
+        onConfirm={handleConfirmDataAction}
         onDownloadBackupFirst={() => {
           handleDownloadBackup();
+          handleConfirmDataAction();
         }}
       />
 
-      {/* Clear Confirmation Modal */}
-      <ClearConfirmModal
-        isOpen={clearModalOpen}
-        onClose={() => setClearModalOpen(false)}
-        onConfirm={handleConfirmClear}
-      />
-
-      {/* Toast Alert with optional Undo action */}
+      {/* Toast Alert with working Undo action */}
       {toastMessage && (
         <aside
           role="status"
@@ -356,11 +439,12 @@ export default function App() {
             <button
               type="button"
               onClick={() => {
-                toastUndo();
+                const undo = toastUndo;
                 setToastMessage(null);
                 setToastUndo(null);
+                undo();
               }}
-              className="px-2 py-0.5 rounded bg-stone-700 hover:bg-stone-600 text-amber-300 font-semibold text-xs transition-colors"
+              className="px-2.5 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-amber-300 font-semibold text-xs transition-colors ring-1 ring-amber-400/40 cursor-pointer"
             >
               Undo
             </button>

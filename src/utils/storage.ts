@@ -154,11 +154,14 @@ export function migrateResumeData(raw: any): ResumeData {
     passport.expiryDate = parseToDateValue(passport.expiryDate, 'day') || passport.expiryDate;
   }
 
-  // Declaration date migration
+  // Declaration date and visibility flags migration
   const declaration = { ...(raw.declaration || {}) };
   if (declaration.date && typeof declaration.date === 'string') {
     declaration.date = parseToDateValue(declaration.date, 'day') || declaration.date;
   }
+  declaration.hideDate = typeof declaration.hideDate === 'boolean' ? declaration.hideDate : false;
+  declaration.hidePlace = typeof declaration.hidePlace === 'boolean' ? declaration.hidePlace : false;
+  declaration.hideSignature = typeof declaration.hideSignature === 'boolean' ? declaration.hideSignature : false;
 
   return {
     basic: {

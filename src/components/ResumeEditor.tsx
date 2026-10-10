@@ -150,14 +150,15 @@ export const ResumeEditor: React.FC<ResumeEditorProps> = ({
   // Mobile tab toggle between 'form' and 'preview'
   const [mobileTab, setMobileTab] = useState<'form' | 'preview'>('form');
 
-  // Open/collapsed states of section cards (UI state only)
+  // Open/collapsed states of section cards (UI state only):
+  // Requirement: ONLY the "Basic Details & Contact" card is expanded by default. Everything else is collapsed.
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    customisation: false, // Collapsible design panel, starts collapsed
+    customisation: false,
     basic: true,
     objective: false,
-    skills: true,
-    experience: true,
-    education: true,
+    skills: false,
+    experience: false,
+    education: false,
     qualifications: false,
     languages: false,
     personal: false,

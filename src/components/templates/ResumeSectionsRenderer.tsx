@@ -515,6 +515,11 @@ export const ResumeSectionItem: React.FC<ResumeSectionsRendererProps> = ({
       if (!declaration.text?.trim()) return null;
       const decDate = formatDatePretty(declaration.date);
 
+      const showDate = !declaration.hideDate && Boolean(decDate);
+      const showPlace = !declaration.hidePlace && Boolean(declaration.place?.trim());
+      const showSignature = !declaration.hideSignature && Boolean(declaration.signatureUrl);
+      const hasMetadata = showDate || showPlace;
+
       return (
         <section className="resume-section-item mb-4 pt-1">
           <SectionHeading
@@ -535,28 +540,32 @@ export const ResumeSectionItem: React.FC<ResumeSectionsRendererProps> = ({
           </p>
 
           <div className="mt-4 flex items-end justify-between">
-            <div
-              className={`space-y-0.5 text-stone-700 ${
-                isCompact ? 'text-[9px]' : 'text-[9.5px]'
-              } ${bodyFontClass}`}
-            >
-              {decDate && (
-                <div>
-                  <span className="font-semibold text-stone-900">Date:</span>{' '}
-                  {decDate}
-                </div>
-              )}
-              {declaration.place && (
-                <div>
-                  <span className="font-semibold text-stone-900">Place:</span>{' '}
-                  {declaration.place}
-                </div>
-              )}
-            </div>
+            {hasMetadata ? (
+              <div
+                className={`space-y-0.5 text-stone-700 ${
+                  isCompact ? 'text-[9px]' : 'text-[9.5px]'
+                } ${bodyFontClass}`}
+              >
+                {showDate && (
+                  <div>
+                    <span className="font-semibold text-stone-900">Date:</span>{' '}
+                    {decDate}
+                  </div>
+                )}
+                {showPlace && (
+                  <div>
+                    <span className="font-semibold text-stone-900">Place:</span>{' '}
+                    {declaration.place}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div />
+            )}
 
             {/* Signature Block */}
             <div className="text-right flex flex-col items-end">
-              {declaration.signatureUrl && (
+              {showSignature && declaration.signatureUrl && (
                 <div className="mb-1 flex justify-end">
                   <img
                     src={declaration.signatureUrl}

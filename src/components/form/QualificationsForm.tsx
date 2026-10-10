@@ -283,13 +283,8 @@ export const QualificationsForm: React.FC<QualificationsFormProps> = ({
   onChange,
   onToast,
 }) => {
-  const [openMap, setOpenMap] = useState<Record<string, boolean>>(() => {
-    const map: Record<string, boolean> = {};
-    if (qualifications.length > 0) {
-      map[qualifications[0].id] = true;
-    }
-    return map;
-  });
+  // Collapsed state tracking (UI state only): all entries collapsed by default; newly added entries still open expanded
+  const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

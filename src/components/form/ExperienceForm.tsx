@@ -331,15 +331,8 @@ export const ExperienceForm: React.FC<ExperienceFormProps> = ({
   onChange,
   onToast,
 }) => {
-  // Collapsed state tracking (UI state only)
-  const [openMap, setOpenMap] = useState<Record<string, boolean>>(() => {
-    // First entry open by default
-    const map: Record<string, boolean> = {};
-    if (experience.length > 0) {
-      map[experience[0].id] = true;
-    }
-    return map;
-  });
+  // Collapsed state tracking (UI state only): all entries collapsed by default; newly added entries still open expanded
+  const [openMap, setOpenMap] = useState<Record<string, boolean>>({});
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
